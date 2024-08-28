@@ -34,6 +34,10 @@ def legislators_by_zipcode(zip)
   end
 end
 
+def frequency(hash)
+  hash.max_by { |k,v| v}
+end
+
 def save_thank_you_letter(id, form_letter)
   Dir.mkdir('output') unless Dir.exist?('output')
 
@@ -54,6 +58,10 @@ contents = CSV.open(
 
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
+peak_hour = Array.new()
+peak_week_day = Array.new()
+i = 0
+week_days = { 1=>'monday', 2=>'tuesday', 3=>'wednesday', 4=>'thursday', 5=>'friday', 6=>'saturday', 7=>'sunday'}
 
 contents.each do |row|
   id = row[0]
@@ -63,7 +71,14 @@ contents.each do |row|
   number = clean_phone_numbers(row[:homephone])
   puts "#{name} #{number}"
 
+  register_date = DateTime.strptime(row[:regdate], '%m/%d/%y %H:%M')
+  peak_hour[i] = register_date.hour
+  peak_week_day[i] = register_date.cwday
+  i = i+1
+
   form_letter = erb_template.result(binding)
   
   save_thank_you_letter(id,form_letter)
 end
+p "people are rigistered at #{frequency(peak_hour.tally)[0]}:00"
+  p "the most active day is: #{week_days[frequency(peak_week_day)].capitalize}"
